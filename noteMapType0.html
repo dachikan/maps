@@ -1,0 +1,225 @@
+﻿<html lang="ja">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Click LatLng</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default">
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <style>
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      /* liの黒丸を非表示にする */
+      ul li {
+        list-style: none;
+      }
+      /* Labelと入力エリアの間に空白を*/
+      label {
+        margin-right: 10px;
+        width:100px;
+      }
+      #search-bar {
+        width: 80%;
+        height: 40px;
+        font-size: 16px;
+        margin-top: 20px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+}
+    </style>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const title = urlParams.get('title');
+        const url = urlParams.get('url');
+        var link = document.getElementById('KijiLink');
+        link.href = url;
+        link.textContent = "題名：" + title;
+      });
+      function splitAddress(address) {
+      // 郵便番号と住所部分を切り分ける正規表現
+        const regex = /^〒?(\d{3}-\d{4})\s*(.*)$/;
+        const match = address.match(regex);
+        if (match) {
+            return {
+                postalCode: match[1],
+                address: match[2]
+            };
+        } else {
+            return null;
+        }
+      }
+      function initMap() {
+
+        // 初期画面
+        const myLatlng = { lat: 35.46612645, lng: 139.6187562 };
+        const map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 14,
+            center: myLatlng,
+        });
+
+        // 検索ボックスの設定
+        // https://qiita.com/tkhshiq/items/723d2a993feb712f021e
+          const input = document.getElementById("pac-input");
+          const searchBox = new google.maps.places.SearchBox(input);
+        ////"SearchBoxクラス"はPlacesライブラリのメソッド。引数はinput(ドキュメント上ではinputFieldとある)。
+        ////[https://developers.google.com/maps/documentation/javascript/reference/places-widget#SearchBox]
+//        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+          ////"ControlPosition"クラスはコントローラーの位置を定める。
+          ////https://lab.syncer.jp/Web/API/Google_Maps/JavaScript/ControlPosition/
+          ////https://developers.google.com/maps/documentation/javascript/examples/control-positioning
+          map.addListener("bounds_changed", () => {
+            searchBox.setBounds(map.getBounds());
+          });
+          ////"bound_changed"イベントは(見えてる範囲の地図･ビューポートに変化があったときに発火)
+          ////https://lab.syncer.jp/Web/API/Google_Maps/JavaScript/Map/bounds_changed/ 
+          ////"getBounds"メソッドはビューポートの境界を取得。Mapクラスのメソッド。
+          ////https://lab.syncer.jp/Web/API/Google_Maps/JavaScript/Map/getBounds/
+          let markers = [];
+          searchBox.addListener("places_changed", () => {
+          ////"place_chaged"イベントはAutoCompleteクラスのイベント.
+          ////https://developers.google.com/maps/documentation/javascript/reference/places-widget#Autocomplete.place_changed
+
+            const places = searchBox.getPlaces();
+            ////"getPlaces"メソッドはクエリ(検索キーワード)を配列(PlaceResult)で返す。
+            ////https://developers.google.com/maps/documentation/javascript/reference/places-widget#Autocomplete.place_changed
+
+            if (places.length == 0) {
+              return;
+            }
+            // Clear out the old markers.
+            markers.forEach((marker) => {
+              //"forEach"メソッドは引数にある関数へ、Mapオブジェクトのキー/値を順に代入･関数の実行をする。
+                //Mapオブジェクト:
+                  //https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Map
+              marker.setMap(null);
+              ////setMapメソッドはMarker(Polyline,Circleなど)クラスのメソッド。Markerを指定した位置に配置する。引数nullにすると地図から取り除く。
+            });
+            markers = [];
+            // For each place, get the icon, name and location.
+            const bounds = new google.maps.LatLngBounds();
+            ////"LatLngBounds"クラスは境界を作るインスンタンスを作成。引数は左下、右上の座標。
+            ////https://lab.syncer.jp/Web/API/Google_Maps/JavaScript/LatLngBounds/#:~:text=LatLngBounds%E3%82%AF%E3%83%A9%E3%82%B9%E3%81%AF%E5%A2%83%E7%95%8C(Bounding,%E4%BD%9C%E3%82%8B%E3%81%93%E3%81%A8%E3%82%82%E3%81%A7%E3%81%8D%E3%81%BE%E3%81%99%E3%80%82
+            places.forEach((place) => {
+              if (!place.geometry) {
+                ////"geometry"はplaceライブラリのメソッド。
+
+                console.log("Returned place contains no geometry");
+                return;
+              }
+              const icon = {
+                url: place.icon,
+                ////"icon"はアイコンを表すオブジェクト。マーカーをオリジナル画像にしたいときなど。
+                ////https://lab.syncer.jp/Web/API/Google_Maps/JavaScript/Icon/
+                size: new google.maps.Size(71, 71),
+                origin: new google.maps.Point(0, 0),
+                anchor: new google.maps.Point(17, 34),
+                ////"Point"クラスはマーカーのラベルなどの位置を決めるインスタンスメソッド。
+                ////https://lab.syncer.jp/Web/API/Google_Maps/JavaScript/Point/
+
+                scaledSize: new google.maps.Size(25, 25),
+              };
+              // Create a marker for each place.
+              markers.push(
+                new google.maps.Marker({
+                  map,
+                  icon,
+                  title: place.name,
+                  position: place.geometry.location,
+                })
+              );
+
+              if (place.geometry.viewport) {
+                ////viewport"メソッド
+                // Only geocodes have viewport.
+                bounds.union(place.geometry.viewport);
+                ////"union"メソッドはLatLngBoundsクラスのメソッド。自身の境界に指定した境界を取り込んで合成する。
+                ////https://lab.syncer.jp/Web/API/Google_Maps/JavaScript/LatLngBounds/union/
+              } else {
+                bounds.extend(place.geometry.location);
+                ////"extend"メソッドはLatLngBoundsクラスのメソッド。自身の境界に新しく位置座標を追加する。
+                ////https://lab.syncer.jp/Web/API/Google_Maps/JavaScript/LatLngBounds/extend/
+              }
+            });
+            map.fitBounds(bounds);
+            ////"fitBounds"メソッドはmapクラスのメソッド。指定した境界を見えやすい位置にビューポートを変更する。
+            ////https://lab.syncer.jp/Web/API/Google_Maps/JavaScript/Map/fitBounds/#:~:text=Map.fitBounds()%E3%81%AFMap,%E5%A4%89%E6%9B%B4%E3%81%97%E3%81%A6%E3%81%8F%E3%82%8C%E3%81%BE%E3%81%99%E3%80%82
+
+          });
+        //}
+        // クリックした場所の情報を取得して保存する
+        map.addListener("click", (mapsMouseEvent) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const aId = urlParams.get('aId');
+            const uId = urlParams.get('uId');
+            const title = urlParams.get('title');
+            const orgUrl = urlParams.get('url');
+            //title = title.substring(0, title.indexOf('｜'));
+            //const currentUrl = window.location.href;
+            //document.getElementById("url").value = currentUrl;
+            // ------
+            var latLng = mapsMouseEvent.latLng;
+            var latitude = latLng.lat().toFixed(6);
+            var longitude = latLng.lng().toFixed(6);
+            map.panTo(latLng);
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode( {'location': latLng},  function(results, status){
+                if (status === 'OK' && results[0]){
+                    var address = results[0].formatted_address.replace('日本、','');
+                    const result = splitAddress(address);
+                    if (result) {
+                        var postcode = result.postalCode;
+                        address = result.address;
+                    }
+                    var link = document.getElementById('KijiLink');
+                    latLng = results[0].geometry.location,
+                    infoWindow = new google.maps.InfoWindow({
+                        content:
+                          '<div id="content" style="width:250px">' +
+                          '<form method="post" action="https://nsk.org/maps/MapPost.php">'  +
+                          '地点マップ作成中<br/>' +
+                          '<input type="hidden" name="mapType" value="1">' +
+                          '<input type=hidden name="orgUrl" style="width:240px; text-align:right" value="' + orgUrl + '" readonly> ' +
+                          '<input type=hidden name="uId" style="width:100px; text-align:right" value="' + uId + '" readonly> ' +
+                          '<input type=hidden name="aId" style="width:100px; text-align:right" value="' + aId + '" readonly> ' +
+                          '<input type=hidden name="title" style="width:240px" value="' + title + '" readonly>' +
+                          '<input type=text name="lat" style="width:100px; text-align:right" value="' + latitude + '" readonly> ' +
+                          '<input type=text name="lng" style="width:100px; text-align:right" value="' + longitude + '" readonly> ' +
+                          '<input type=text name="postcode" style="width:100px;" value="' + postcode + '" readonly> ' +
+                          '<input type=text name="address" style="width:240px;" value="' + address + '" readonly> ' +
+                          '<input type=hidden name="building" style="width:100px; text-align:right" value="" readonly>' +
+                          '<input type=hidden name="pname" style="width:240px" placeholder="この場所の名前" readonly>' +
+                          '<input type=text id="newUrl" name="mapdata" style="width:240px" title="既に作成したurlを入力する" placeholder="New Url"><br>' +
+                          '<a href="" onclick="" class="btn btn-outline-Dark btn-sm">次の地点に移動</a> ' +
+                          '<input type="submit" class="btn btn-primary btn-sm" style="text-align: center;" value="保存"> ' +
+                          '</form></div>',
+                        position: latLng,
+                        maxWidth: 600,
+                    });
+                    infoWindow.open(map);
+                } else {
+                    alert("住所から位置の取得ができませんでした。: " + status);
+                    return;
+                }
+            });
+        });
+      }
+      window.initMap = initMap;
+    </script>
+  </head>
+  <body>
+    <!-- <a onclick="setTitle()">タイトル取得</a> -->
+    <input id="pac-input" class="controls" type="text" placeholder="Search Box"/>
+    <a id="KijiLink" class="btn" href="note.com">タイトル</a>
+    <div id="map" class="map" style="height: 96%; width: 100%;"></div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_vrI96hCDkV19Auv15RKJL_MX0BXIlcQ&callback=initMap&libraries=places"></script>
+  </body>
+</html>

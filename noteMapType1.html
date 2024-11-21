@@ -1,0 +1,139 @@
+﻿<html lang="ja">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Click LatLng</title>
+    <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=default">
+    </script> -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <style>
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      /* liの黒丸を非表示にする */
+      ul li {
+        list-style: none;
+      }
+      /* Labelと入力エリアの間に空白を*/
+      label {
+        margin-right: 10px;
+        width:100px;
+      }
+    </style>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const title = urlParams.get('title');
+        const url = urlParams.get('url');
+        var link = document.getElementById('KijiLink');
+        link.href = url;
+        link.textContent = "題名：" + title;
+      });
+      function splitAddress(address) {
+      // 郵便番号と住所部分を切り分ける正規表現
+        const regex = /^〒?(\d{3}-\d{4})\s*(.*)$/;
+        const match = address.match(regex);
+        if (match) {
+            return {
+                postalCode: match[1],
+                address: match[2]
+            };
+        } else {
+            return null;
+        }
+      }
+      function initMap() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const lat = parseFloat(urlParams.get('lat'));
+        const lng = parseFloat(urlParams.get('lng'));
+        // 初期画面
+        const map = new google.maps.Map(document.getElementById('map'), {
+          center: { lat: lat, lng: lng },
+          zoom: 15,
+        });
+        var marker = new google.maps.Marker({
+          position: {lat: lat, lng: lng},
+          map: map,
+          title: 'Marker Title' 
+        });
+        // 初期Window
+        // let infoWindow = new google.maps.InfoWindow({
+        //     content: "クリックしてここの情報を得る!",
+        //     position: { lat: lat, lng: lng },
+        // });
+        // infoWindow.open(map);
+        // click動作
+        map.addListener("click", (mapsMouseEvent) => {
+            //const urlParams = new URLSearchParams(window.location.search);
+            const aId = urlParams.get('aId');
+            const uId = urlParams.get('uId');
+            const title = urlParams.get('title');
+            const orgUrl = urlParams.get('url');
+            //title = title.substring(0, title.indexOf('｜'));
+            const currentUrl = window.location.href;
+            //document.getElementById("url").value = currentUrl;
+            // ------
+            var latLng = mapsMouseEvent.latLng;
+            var latitude = latLng.lat().toFixed(6);
+            var longitude = latLng.lng().toFixed(6);
+            infoWindow.close();
+            map.panTo(latLng);
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode( {'location': latLng},  function(results, status){
+                if (status === 'OK' && results[0]){
+                    var address = results[0].formatted_address.replace('日本、','');
+                    const result = splitAddress(address);
+                    if (result) {
+                        var postcode = result.postalCode;
+                        address = result.address;
+                    }
+                    var link = document.getElementById('KijiLink');
+                    latLng = results[0].geometry.location,
+                    infoWindow = new google.maps.InfoWindow({
+                        content:
+                          '<div id="content" style="width:300px">' +
+                          '<form method="post" action="https://nsk.org/maps/MapPost.php">'  +
+                          '地点マップ作成中<br/>' +
+                          '<input type="hidden" name="mapType" value="1">' +
+                          '<label><input type="checkbox" onclick="if(this.checked) { window.location.href = &quot;noteMapType3.html?' + urlParams + '&quot;; }">ルートマップ</label>' +
+                          '<input type=text name="orgUrl" style="width:240px; text-align:right" value="' + orgUrl + '" readonly> ' +
+                          '<input type=hidden name="uId" style="width:100px; text-align:right" value="' + uId + '" readonly> ' +
+                          '<input type=hidden name="aId" style="width:100px; text-align:right" value="' + aId + '" readonly> ' +
+                          '<input type=text name="title" style="width:240px" value="' + title + '" readonly>' +
+                          '<input type=text name="lat" style="width:100px; text-align:right" value="' + latitude + '" readonly> ' +
+                          '<input type=text name="lng" style="width:100px; text-align:right" value="' + longitude + '" readonly> ' +
+                          '<input type=text name="postcode" style="width:100px;" value="' + postcode + '" readonly> ' +
+                          '<input type=text name="address" style="width:240px;" value="' + address + '" readonly> ' +
+                          '<input type=hidden name="building" style="width:100px; text-align:right" value="" readonly>' +
+                          '<input type=text name="pname" style="width:240px" placeholder="この場所の名前" readonly>' +
+                          '<input type=text name="mapdata" style="width:240px" placeholder="New Url"><br>' +
+                          '<input type="submit" style="text-align: center;" value="保存">' +
+                          '</form></div>',
+                        position: latLng,
+                        maxWidth: 600,
+                    });
+                    //infoWindow.open(map);
+                } else {
+                    alert("住所から位置の取得ができませんでした。: " + status);
+                    return;
+                }
+            });
+        });
+      }
+      window.initMap = initMap;
+    </script>
+  </head>
+  <body>
+    <!-- <a onclick="setTitle()">タイトル取得</a> -->
+    <a id="KijiLink" class="btn" href="note.com">タイトル</a>
+    <div id="map" class="map" style="height: 96%; width: 100%;"></div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_vrI96hCDkV19Auv15RKJL_MX0BXIlcQ&loading=async&callback=initMap"></script>
+  </body>
+</html>
