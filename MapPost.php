@@ -24,8 +24,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $postcode = $_POST['postcode'];
     $address = $_POST['address'];
     $building = $_POST['building'];
-    $lat = $_POST['lat1'];
-    $lng = $_POST['lng1'];
+    $lat = $_POST['lat_1'];
+    $lng = $_POST['lng_1'];
     $pname = $_POST['pname'];
     $mapdata = $_POST['mapdata'];
     $sql = "INSERT INTO areas (MapType, OrgUrl, UserId, ArticleId, Title, PostCode, Addr, Building, Lat, Lng, Pname, NewUrl )
