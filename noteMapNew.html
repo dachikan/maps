@@ -116,8 +116,8 @@
         //}
         // クリックした場所の情報を取得して保存する
         map.addListener("click", function(e) {
-          //if (counter == 0)
-          //{
+          if (counter == 0)
+          {
             const urlParams = new URLSearchParams(window.location.search);
             const aId = urlParams.get('aId');
             var val = document.getElementById('aId');
@@ -135,7 +135,26 @@
             //const currentUrl = window.location.href;
             //document.getElementById("url").value = currentUrl;
             // ------
-          //}
+          }
+          else if (counter == 1)
+          {
+            let userInput = prompt('選択してください: r (ルート) / m (マーカー)');
+            handleUserInput(userInput.charAt(0)); // 入力を1文字に制限
+            switch(input.toLowerCase())
+            {
+              case 'r':
+                drawRoute();
+                break;
+              case 'm':
+                placeMarker();
+                break;
+              case 'c':
+                // 無視（何もしない）
+                break;
+              default:
+                console.log('無効な入力です');
+            }
+          }
           addInputBlock(e.latLng);
         });
       }
@@ -211,6 +230,19 @@
             }
         });
         };
+      // ルートを描く処理
+      function drawRoute()
+      {
+        console.log('ルートを描く処理を実行します');
+        // ここにルート描画のロジックを追加します
+      }
+        // マーカーを配置する処理
+      function placeMarker()
+      {
+          console.log('マーカーを配置する処理を実行します');
+      // ここにマーカー配置のロジックを追加します
+      }
+      // 初期化
       window.initMap = initMap;
     </script>
   </head>
