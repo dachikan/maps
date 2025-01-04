@@ -1,0 +1,26 @@
+#map {
+    height: 100%;
+  }
+  /* Optional: Makes the sample page fill the window. */
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  /* liの黒丸を非表示にする */
+  ul li {
+    list-style: none;
+  }
+  /* Labelと入力エリアの間に空白を*/
+  label {
+    margin-right: 10px;
+    width:100px;
+  }
+  #search-bar {
+    width: 80%;
+    height: 40px;
+    font-size: 16px;
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}

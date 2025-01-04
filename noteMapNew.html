@@ -2,37 +2,11 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Event Click LatLng</title>
-    <!-- <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script> -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-    <style>
-      #map {
-        height: 100%;
-      }
-      /* Optional: Makes the sample page fill the window. */
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-      }
-      /* liの黒丸を非表示にする */
-      ul li {
-        list-style: none;
-      }
-      /* Labelと入力エリアの間に空白を*/
-      label {
-        margin-right: 10px;
-        width:100px;
-      }
-      #search-bar {
-        width: 80%;
-        height: 40px;
-        font-size: 16px;
-        margin-top: 20px;
-        border: 1px solid #ddd;
-        border-radius: 3px;
-}
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <link href="./notemap.css" rel="stylesheet">
+    <script src="./splitAddress.js"></script>
+    <script src="./searchBoxListener.js"></script>
     <script>
       let map;
       let counter = 0;
@@ -45,9 +19,8 @@
         link.href = url;
         link.textContent = "題名：" + title;
       });
-
       function splitAddress(address) {
-      // 郵便番号と住所部分を切り分ける正規表現
+        // 郵便番号と住所部分を切り分ける正規表現
         const regex = /^〒?(\d{3}-\d{4})\s*(.*)$/;
         const match = address.match(regex);
         if (match) {
@@ -148,17 +121,7 @@
         var latitude = latLng.lat().toFixed(6);
         var longitude = latLng.lng().toFixed(6);
 
-        // 新しい入力フィールドを追加
-        /*
-        GoogleMapsの地図上をclickする度にn++して、
-        <label name=l_n text=Ln>
-        <input type=text name=lat_n style=width:95px value=latitude>
-        <input type=text name=lon_n stype=width:95px value=longitude>
-        改行
-        <input type=text name=comment_n style=200px placeholder="当地点のコメント">
-        を2行の長方形のブロック（1行目はlat_nとLon_n、2行名はcomment_n）としてhtmlを生成しする
-        javascript
-        */
+
         counter++;
         document.getElementById("content").style.display = "block";
         const container = document.getElementById('input-container');
