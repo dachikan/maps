@@ -5,7 +5,7 @@
   <title>Event Click LatLng</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap&libraries=places" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_vrI96hCDkV19Auv15RKJL_MX0BXIlcQ&callback=initMap&libraries=places" async defer></script>
   <style>
     #map {
       height: 100%;
@@ -20,7 +20,7 @@
     }
     label {
       margin-right: 10px;
-      width:100px;
+      width: 100px;
     }
     #search-bar {
       width: 80%;
@@ -33,8 +33,10 @@
   </style>
   <script>
     let map;
-    let routePath;
-    let routeCoordinates = [];
+    let directionsService;
+    let directionsRenderer;
+    let waypoints = [];
+    let counter = 0;
 
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -66,6 +68,10 @@
         scaleControl: true,
       });
 
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer();
+      directionsRenderer.setMap(map);
+
       const input = document.getElementById("pac-input");
       const searchBox = new google.maps.places.SearchBox(input);
       map.addListener("bounds_changed", () => {
@@ -80,10 +86,7 @@
         markers = [];
         const bounds = new google.maps.LatLngBounds();
         places.forEach((place) => {
-          if (!place.geometry) {
-            console.log("Returned place contains no geometry");
-            return;
-          }
+          if (!place.geometry) { console.log("Returned place contains no geometry"); return; }
           const icon = {
             url: place.icon,
             size: new google.maps.Size(71, 71),
@@ -96,8 +99,7 @@
             icon,
             title: place.name,
             position: place.geometry.location,
-          })
-        );
+          }));
 
           if (place.geometry.viewport) {
             bounds.union(place.geometry.viewport);
@@ -111,45 +113,51 @@
       map.addListener("click", function(e) {
         addInputBlock(e.latLng);
       });
-
-      routePath = new google.maps.Polyline({
-        path: routeCoordinates,
-        geodesic: true,
-        strokeColor: "#FF0000",
-        strokeOpacity: 1.0,
-        strokeWeight: 2,
-      });
-
-      routePath.setMap(map);
     }
 
     function addInputBlock(latLng) {
-      routeCoordinates.push(latLng);
-      routePath.setPath(routeCoordinates);
+      counter++;
+      if (counter == 1) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const aId = urlParams.get('aId');
+        var val = document.getElementById('aId');
+        val.value = aId;
+        const uId = urlParams.get('uId');
+        val = document.getElementById('uId');
+        val.value = uId;
+        const title = urlParams.get('title');
+        val = document.getElementById('title');
+        val.value = title;
+        const orgUrl = urlParams.get('url');
+        val = document.getElementById('orgUrl');
+        val.value = orgUrl;
+      }
+
+      waypoints.push({ location: latLng, stopover: true });
 
       const container = document.getElementById('input-container');
       const inputBlock = document.createElement('div');
       inputBlock.className = 'input-block';
 
       const label = document.createElement('label');
-      label.textContent = 'L' + (routeCoordinates.length);
+      label.textContent = 'L' + counter;
       label.style.width = '20px';
 
       const latInput = document.createElement('input');
       latInput.type = 'text';
-      latInput.name = 'lat_' + (routeCoordinates.length);
+      latInput.name = 'lat_' + counter;
       latInput.style.width = '105px';
       latInput.value = latLng.lat();
 
       const lngInput = document.createElement('input');
       lngInput.type = 'text';
-      lngInput.name = 'lng_' + (routeCoordinates.length);
+      lngInput.name = 'lng_' + counter;
       lngInput.style.width = '105px';
       lngInput.value = latLng.lng();
 
       const commentInput = document.createElement('input');
       commentInput.type = 'text';
-      commentInput.name = 'comment_' + (routeCoordinates.length);
+      commentInput.name = 'comment_' + counter;
       commentInput.style.width = '240px';
       commentInput.placeholder = '当地点のコメント';
 
@@ -179,6 +187,32 @@
           return;
         }
       });
+
+      if (waypoints.length > 1) {
+        calculateAndDisplayRoute();
+      }
+    }
+
+    function calculateAndDisplayRoute() {
+      const start = waypoints[0].location;
+      const end = waypoints[waypoints.length - 1].location;
+      const waypts = waypoints.slice(1, -1);
+
+      directionsService.route(
+        {
+          origin: start,
+          destination: end,
+          waypoints: waypts,
+          travelMode: google.maps.TravelMode.DRIVING,
+        },
+        (response, status) => {
+          if (status === "OK") {
+            directionsRenderer.setDirections(response);
+          } else {
+            window.alert("Directions request failed due to " + status);
+          }
+        }
+      );
     }
   </script>
 </head>

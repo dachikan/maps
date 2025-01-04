@@ -10,8 +10,7 @@
         height: 100%;
       }
       /* Optional: Makes the sample page fill the window. */
-      html,
-      body {
+      html, body {
         height: 100%;
         margin: 0;
         padding: 0;
@@ -37,6 +36,7 @@
     <script>
       let map;
       let counter = 0;
+      let clickedPoints = [];
       document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
         const title = urlParams.get('title');
@@ -45,6 +45,7 @@
         link.href = url;
         link.textContent = "題名：" + title;
       });
+
       function splitAddress(address) {
       // 郵便番号と住所部分を切り分ける正規表現
         const regex = /^〒?(\d{3}-\d{4})\s*(.*)$/;
@@ -58,6 +59,8 @@
             return null;
         }
       }
+      let directionsService;
+      let directionsRenderer;
       function initMap() {
         // 初期画面
         const myLatlng = { lat: 35.46612645, lng: 139.6187562 };
@@ -66,7 +69,9 @@
             center: myLatlng,
             scaleControl: true,
         });
-
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer();
+        directionsRenderer.setMap(map);
         // 検索ボックスの設定
         // https://qiita.com/tkhshiq/items/723d2a993feb712f021e
         const input = document.getElementById("pac-input");
@@ -74,13 +79,12 @@
         map.addListener("bounds_changed", () => {
           searchBox.setBounds(map.getBounds());
         });
+
         let markers = [];
         searchBox.addListener("places_changed", () => {
             const places = searchBox.getPlaces();
             if (places.length == 0) { return; }
-            markers.forEach((marker) => {
-              marker.setMap(null);
-            });
+            markers.forEach((marker) => { marker.setMap(null); });
             markers = [];
             const bounds = new google.maps.LatLngBounds();
             places.forEach((place) => {
@@ -96,8 +100,7 @@
                 scaledSize: new google.maps.Size(25, 25),
               };
               // Create a marker for each place.
-              markers.push(
-                new google.maps.Marker({
+              markers.push(new google.maps.Marker({
                   map,
                   icon,
                   title: place.name,
@@ -116,8 +119,7 @@
         //}
         // クリックした場所の情報を取得して保存する
         map.addListener("click", function(e) {
-          if (counter == 0)
-          {
+          if (counter == 0) {
             const urlParams = new URLSearchParams(window.location.search);
             const aId = urlParams.get('aId');
             var val = document.getElementById('aId');
@@ -131,32 +133,15 @@
             const orgUrl = urlParams.get('url');
             val = document.getElementById('orgUrl');
             val.value = orgUrl;
-            //title = title.substring(0, title.indexOf('｜'));
-            //const currentUrl = window.location.href;
-            //document.getElementById("url").value = currentUrl;
-            // ------
-          }
-          else if (counter == 1)
-          {
-            let userInput = prompt('選択してください: r (ルート) / m (マーカー)');
-            handleUserInput(userInput.charAt(0)); // 入力を1文字に制限
-            switch(input.toLowerCase())
-            {
-              case 'r':
-                drawRoute();
-                break;
-              case 'm':
-                placeMarker();
-                break;
-              case 'c':
-                // 無視（何もしない）
-                break;
-              default:
-                console.log('無効な入力です');
-            }
           }
           addInputBlock(e.latLng);
+          clickedPoints.push({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+          updateClickedPointsList();
+          if (clickedPoints.length > 1) {
+            drawRoute();
+          }
         });
+
       }
       function addInputBlock(latLng) {
         //var latLng = e.latLng;
@@ -231,11 +216,38 @@
         });
         };
       // ルートを描く処理
-      function drawRoute()
-      {
-        console.log('ルートを描く処理を実行します');
-        // ここにルート描画のロジックを追加します
+      function drawRoute() {
+        const waypoints = clickedPoints.slice(1, -1).map(point => ({ location: point, stopover: true }));
+        const origin = clickedPoints[0];
+        const destination = clickedPoints[clickedPoints.length - 1];
+
+        const request = {
+          origin: origin,
+          destination: destination,
+          waypoints: waypoints,
+          travelMode: google.maps.TravelMode.DRIVING
+        };
+
+        directionsService.route(request, (result, status) => {
+          if (status === google.maps.DirectionsStatus.OK) {
+            directionsRenderer.setDirections(result);
+          } else {
+            console.log('ルート描画に失敗しました: ' + status);
+          }
+        });
       }
+
+      function updateClickedPointsList() {
+        const pointsList = document.getElementById('clicked-points-list');
+        pointsList.innerHTML = ''; // リストをクリア
+
+        clickedPoints.forEach((point, index) => {
+          const listItem = document.createElement('li');
+          listItem.textContent = `Point ${index + 1}: (${point.lat}, ${point.lng})`;
+          pointsList.appendChild(listItem);
+        });
+      }
+
         // マーカーを配置する処理
       function placeMarker()
       {
@@ -250,6 +262,11 @@
     <!-- <a onclick="setTitle()">タイトル取得</a> -->
     <input type="text" id="pac-input" class="controls" style="width:240px;" placeholder="Search Box"/>
     <a id="KijiLink" class="btn" href="note.com">タイトル</a>
+    <div id="clicked-points" style="position:absolute; top: 93px; left: 270px; z-index: 100; background-color: #ddf;">
+      <h3>クリックした地点</h3>
+      <ul id="clicked-points-list"></ul>
+    </div>
+
     <div id="style-selector-control" class="map-control" style="position:absolute; top: 93px; left: 10px; z-index: 100; background-color: #ddf;">
       <div id="content" style="width:250px; padding:5px; display:none">
         <form method="post" action="https://nsk.org/maps/MapPost.php">
