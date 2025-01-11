@@ -83,7 +83,7 @@
             var latLng = mapsMouseEvent.latLng;
             var latitude = latLng.lat().toFixed(6);
             var longitude = latLng.lng().toFixed(6);
-            infoWindow.close();
+            //infoWindow.close();
             map.panTo(latLng);
             const geocoder = new google.maps.Geocoder();
             geocoder.geocode( {'location': latLng},  function(results, status){

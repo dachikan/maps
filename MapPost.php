@@ -27,19 +27,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $lat = $_POST['lat_1'];
     $lng = $_POST['lng_1'];
     $pname = $_POST['pname'];
+    if ($mapType == 3) {
+        // $routeData = [];
+        // for ($i = 1; $i <= 10; $i++) {
+        //     $lat = $_POST["lat_$i"];
+        //     $lng = $_POST["lng_$i"];
+        //     if (is_null($lat)) break; // $latがnullだったらループを抜ける
+        //     $comment = $_POST["comment_$i"];
+        //     $routeData[] = ["lat" => $lat, "lng" => $lng, "comment" => $comment];
+        // }
+        $lat_1 = $_POST['lat_1'];
+        $lng_1 = $_POST['lng_1'];
+
+        $comment_1 = $_POST['comment_1'];
+        $lat_2 = $_POST['lat_2'];
+        $lng_2 = $_POST['lng_2'];
+        $comment_2 = $_POST['comment_2'];
+        $routeData = [
+            ["lat" => $lat_1, "lng" => $lng_1, "comment" => $comment_1],
+            ["lat" => $lat_2, "lng" => $lng_2, "comment" => $comment_2]
+        ];
+        $mapdata = json_encode($routeData, JSON_UNESCAPED_UNICODE);
+
+        echo "表示する値: " .$lat."：".$lng."：".$routeData[0] . "\n";
+        // echo "続行するにはEnterキーを押してください...";
+        // fgets(STDIN);
+        // echo "続行します。\n";
+
+    } else {
+        // $lat = $_POST['lat_1'];
+        // $lng = $_POST['lng_1'];
+        $mapdata = $_POST['mapdata'];
+    }
     $mapdata = $_POST['mapdata'];
     $sql = "INSERT INTO areas (MapType, OrgUrl, UserId, ArticleId, Title, PostCode, Addr, Building, Lat, Lng, Pname, NewUrl )
             VALUES ('$mapType','$orgUrl','$uId', '$aId', '$title', '$postcode', '$address', '$building', '$lat', '$lng', '$pname', '$mapdata')";
     //echo $sql;
     //error_reporting(E_ALL);
     ini_set('display_errors', 1);
+    error_reporting(E_ALL);
     if ($conn->query($sql) === TRUE) {
         //echo "Data inserted successfully";
-        ?>
-        <!DOCTYPE html>
-        <html lang="ja">
+        echo "<!DOCTYPE html>
+        <html lang='ja'>
             <head>
-                <meta charset="UTF-8">
+                <meta charset='UTF-8'>
                 <title>ウィンドウ表示</title>
                 <style>
                 body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f0f0; }
@@ -49,16 +81,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </style>
             </head>
             <body>
-                <div class="container">
+                <div class='container'>
                     <h3>地図情報を保存しました</h3>
-                    <img src="img/mapIllust.png" alt="Illustration"> <br>
-                    <p>今後は<img src="img/icon16.png" alt="Illustration">クリックして地図を起動します。</p>
-                    <button onclick="closeWindow()">終了</button>
+                    <img src='img/mapIllust.png' alt='Illustration'> <br>
+                    <p>今後は<img src='img/icon16.png' alt='Illustration'>クリックして地図を起動します。</p>
+                    <button onclick='closeWindow()'>終了</button>
                 </div>
                 <script> function closeWindow() { window.close(); } </script>
             </body>
-        </html>
-        <?php
+        </html>";
     } else {
         echo "Error: " . $sql . "<br>" . $conn->error;
     }

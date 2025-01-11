@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Click LatLng</title>
+    <link href="./notemap.css" rel="stylesheet">
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const params = new URLSearchParams(window.location.search);
+        const link = document.getElementById('KijiLink');
+        link.href = params.get('url');
+        link.textContent = "題名：" + params.get('title');
+      });
+
+      let map, counter = 0, clickedPoints = [], directionsService, directionsRenderer;
+
+      function initMap() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const lat = parseFloat(urlParams.get('lat'));
+        const lng = parseFloat(urlParams.get('lng'));
+          // 初期画面
+          const map = new google.maps.Map(document.getElementById('map'), {
+          center: { lat: lat, lng: lng },
+          zoom: 15,
+        });
+
+       // map = new google.maps.Map(document.getElementById("map"), {
+       //   zoom: 14, center: { lat: 35.466126, lng: 139.618756 }, scaleControl: true,
+       // });
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({ map });
+
+        const input = document.getElementById("pac-input");
+        const searchBox = new google.maps.places.SearchBox(input);
+        map.addListener("bounds_changed", () => searchBox.setBounds(map.getBounds()));
+
+        searchBox.addListener("places_changed", () => {
+          const places = searchBox.getPlaces();
+          if (places.length === 0) return;
+          const bounds = new google.maps.LatLngBounds();
+          places.forEach(place => {
+            if (!place.geometry) return;
+            new google.maps.Marker({
+              map, icon: { url: place.icon, scaledSize: new google.maps.Size(25, 25) },
+              title: place.name, position: place.geometry.location
+            });
+            bounds.extend(place.geometry.viewport || place.geometry.location);
+          });
+          map.fitBounds(bounds);
+        });
+
+        map.addListener("click", (e) => {
+          if (counter === 0) fillInitialFormFields();
+          addInputBlock(e.latLng);
+          clickedPoints.push({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+          if (clickedPoints.length > 1) drawRoute();
+        });
+      }
+
+      function fillInitialFormFields() {
+        const params = new URLSearchParams(window.location.search);
+        ['aId', 'uId', 'title', 'orgUrl'].forEach(id => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.value = params.get(id);
+          }
+        });
+      }
+
+      function addInputBlock(latLng) {
+        counter++;
+        const container = document.getElementById('input-container');
+        const inputBlock = document.createElement('div');
+        inputBlock.className = 'input-block';
+        inputBlock.innerHTML = `
+          <label>L${counter}</label><input type="text" name="lat_${counter}" value="${latLng.lat()}">
+          <input type="text" name="lng_${counter}" value="${latLng.lng()}">
+          <input type="text" name="comment_${counter}" placeholder="当地点のコメント">`;
+        container.appendChild(inputBlock);
+        map.panTo(latLng);
+        getGeocodedAddress(latLng);
+      }
+
+      function getGeocodedAddress(latLng) {
+        new google.maps.Geocoder().geocode({ location: latLng }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            const addressParts = results[0].formatted_address.replace('日本、', '').split(' ');
+            document.getElementById('postcode').value = addressParts[0];
+            document.getElementById('address').value = addressParts.slice(1).join(' ');
+          }
+        });
+      }
+
+      function drawRoute() {
+        const waypoints = clickedPoints.slice(1, -1).map(point => ({ location: point, stopover: true }));
+        const origin = clickedPoints[0];
+        const destination = clickedPoints[clickedPoints.length - 1];
+
+        const request = {
+          origin: origin,
+          destination: destination,
+          waypoints: waypoints,
+          travelMode: google.maps.TravelMode.DRIVING
+        };
+
+        directionsService.route(request, (result, status) => {
+          if (status === google.maps.DirectionsStatus.OK) {
+            directionsRenderer.setDirections(result);
+          } else {
+            console.log('ルート描画に失敗しました: ' + status);
+          }
+        });
+      }
+
+      window.initMap = initMap;
+    </script>
+  </head>
+  <body>
+    <input type="text" id="pac-input" class="controls" style="width:240px;" placeholder="Search Box"/>
+    <a id="KijiLink" class="btn" href="#">タイトル</a>
+    <div id="clicked-points" style="background-color: #ddf; position: absolute; top: 93px; left: 270px; z-index: 100;">
+      <h3>クリックした地点</h3>
+      <ul id="clicked-points-list"></ul>
+    </div>
+    <div id="content" style="display: none;">
+      <form method="post" action="https://nsk.org/maps/MapPost.php">
+        <input type="hidden" id="mapType" name="mapType" value="1">
+        <input type="hidden" id="orgUrl" name="orgUrl">
+        <input type="hidden" id="uId" name="uId">
+        <input type="hidden" id="aId" name="aId">
+        <input type="text" id="postcode" name="postcode" readonly>
+        <input type="text" id="address" name="address" readonly>
+        <textarea id="title" name="title" style="display:none;" readonly></textarea>
+        <textarea id="newUrl" name="mapdata" style="display:none;"></textarea>
+        <textarea id="pname" name="pname" style="display:none;"></textarea>
+        <div id="input-container"></div>
+        <input type="submit" class="btn btn-primary btn-sm" value="保存して終了">
+      </form>
+    </div>
+    <div id="map" class="map" style="height: 96%; width: 100%;"></div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_vrI96hCDkV19Auv15RKJL_MX0BXIlcQ&callback=initMap&libraries=places" async defer></script>
+  </body>
+</html>

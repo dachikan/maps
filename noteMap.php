@@ -42,7 +42,7 @@ try {
             header("Location: noteMapType2.html?".$param);
             exit();
         } elseif ($mapType == 3) {
-            header("Location: noteMapType3.html?".$param);
+            header("Location: noteMapType3.html?"."lat=".$lat."&lng=".$lng."&".$param);
             exit();
         } elseif ($mapType == 9) {
             header("Location: $newUrl");
