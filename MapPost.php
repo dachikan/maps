@@ -24,44 +24,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $postcode = $_POST['postcode'];
     $address = $_POST['address'];
     $building = $_POST['building'];
-    $lat = $_POST['lat_1'];
-    $lng = $_POST['lng_1'];
+    $lat0 = $_POST['lat_1'];
+    $lng0 = $_POST['lng_1'];
     $pname = $_POST['pname'];
     if ($mapType == 3) {
-        // $routeData = [];
-        // for ($i = 1; $i <= 10; $i++) {
-        //     $lat = $_POST["lat_$i"];
-        //     $lng = $_POST["lng_$i"];
-        //     if (is_null($lat)) break; // $latがnullだったらループを抜ける
-        //     $comment = $_POST["comment_$i"];
-        //     $routeData[] = ["lat" => $lat, "lng" => $lng, "comment" => $comment];
-        // }
-        $lat_1 = $_POST['lat_1'];
-        $lng_1 = $_POST['lng_1'];
-
-        $comment_1 = $_POST['comment_1'];
-        $lat_2 = $_POST['lat_2'];
-        $lng_2 = $_POST['lng_2'];
-        $comment_2 = $_POST['comment_2'];
-        $routeData = [
-            ["lat" => $lat_1, "lng" => $lng_1, "comment" => $comment_1],
-            ["lat" => $lat_2, "lng" => $lng_2, "comment" => $comment_2]
-        ];
+        $routeData = [];
+        for ($i = 1; $i <= 10; $i++) {
+            $lat = $_POST["lat_$i"];
+            $lng = $_POST["lng_$i"];
+            if (is_null($lat)) break; // $latがnullだったらループを抜ける
+            $comment = $_POST["comment_$i"];
+            $routeData[] = ["lat" => $lat, "lng" => $lng, "comment" => $comment];
+        }
         $mapdata = json_encode($routeData, JSON_UNESCAPED_UNICODE);
-
-        echo "表示する値: " .$lat."：".$lng."：".$routeData[0] . "\n";
-        // echo "続行するにはEnterキーを押してください...";
-        // fgets(STDIN);
-        // echo "続行します。\n";
-
     } else {
-        // $lat = $_POST['lat_1'];
-        // $lng = $_POST['lng_1'];
         $mapdata = $_POST['mapdata'];
     }
-    $mapdata = $_POST['mapdata'];
-    $sql = "INSERT INTO areas (MapType, OrgUrl, UserId, ArticleId, Title, PostCode, Addr, Building, Lat, Lng, Pname, NewUrl )
-            VALUES ('$mapType','$orgUrl','$uId', '$aId', '$title', '$postcode', '$address', '$building', '$lat', '$lng', '$pname', '$mapdata')";
+    $sql = "INSERT INTO areas (MapType, OrgUrl, UserId, ArticleId, Title, PostCode, Addr, Building, Lat, Lng, Pname, MapData )
+            VALUES ('$mapType','$orgUrl','$uId', '$aId', '$title', '$postcode', '$address', '$building', '$lat0', '$lng0', '$pname', '$mapdata')";
     //echo $sql;
     //error_reporting(E_ALL);
     ini_set('display_errors', 1);
