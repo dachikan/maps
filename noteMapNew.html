@@ -5,6 +5,8 @@
     <link href="./notemap.css" rel="stylesheet">
     <script>
       let map;
+      let directionsService;
+      let directionsRenderer;
       let counter = 0;
       let clickedPoints = [];
       document.addEventListener('DOMContentLoaded', function() {
@@ -16,24 +18,31 @@
         link.textContent = "題名：" + title;
       });
       function splitAddress(address) {
-        // 郵便番号と住所部分を切り分ける正規表現
         const regex = /^〒?(\d{3}-\d{4})\s*(.*)$/;
         const match = address.match(regex);
         if (match) {
-            return {
-                postalCode: match[1], address: match[2]
-            };
+          return {
+            postalCode: match[1], address: match[2]
+          };
         } else {
-            return null;
+          return null;
         }
       }
-      let directionsService;
-      let directionsRenderer;
+
       function initMap() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let lat = parseFloat(urlParams.get('lat'));
+        let lng = parseFloat(urlParams.get('lng'));
+        const mapData = JSON.parse(urlParams.get('mapdata'));
+        if (isNaN(lat)) {
+          lat = 35.46612645;
+          lng = 139.6187562;
+        }
         // 初期画面
-        const myLatlng = { lat: 35.46612645, lng: 139.6187562 };
         map = new google.maps.Map(document.getElementById("map"), {
-          zoom: 14, center: { lat: 35.466126, lng: 139.618756 }, scaleControl: true,
+          zoom: 14,
+          center: { lat: lat, lng: lng },
+          scaleControl: true,
         });
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer();
@@ -69,8 +78,7 @@
                   icon,
                   title: place.name,
                   position: place.geometry.location,
-                })
-              );
+              }));
 
               if (place.geometry.viewport) {
                 bounds.union(place.geometry.viewport);
@@ -100,7 +108,7 @@
           }
           addInputBlock(e.latLng);
           clickedPoints.push({ lat: e.latLng.lat(), lng: e.latLng.lng() });
-          updateClickedPointsList();
+          //updateClickedPointsList();
           if (clickedPoints.length > 1) {
             drawRoute();
           }
@@ -143,7 +151,6 @@
         commentInput.placeholder = '当地点のコメント';
 
         inputBlock.appendChild(label);
-        //inputBlock.appendChild(document.createElement('br'));
         inputBlock.appendChild(latInput);
         inputBlock.appendChild(lngInput);
         inputBlock.appendChild(document.createElement('br'));
@@ -192,17 +199,6 @@
         });
       }
 
-      function updateClickedPointsList() {
-        const pointsList = document.getElementById('clicked-points-list');
-        pointsList.innerHTML = ''; // リストをクリア
-
-        clickedPoints.forEach((point, index) => {
-          const listItem = document.createElement('li');
-          listItem.textContent = `Point ${index + 1}: (${point.lat}, ${point.lng})`;
-          pointsList.appendChild(listItem);
-        });
-      }
-
         // マーカーを配置する処理
       function placeMarker()
       {
@@ -214,14 +210,8 @@
     </script>
   </head>
   <body>
-    <!-- <a onclick="setTitle()">タイトル取得</a> -->
     <input type="text" id="pac-input" class="controls" style="width:240px;" placeholder="Search Box"/>
     <a id="KijiLink" class="btn" href="note.com">タイトル</a>
-    <div id="clicked-points" style="position:absolute; top: 93px; left: 270px; z-index: 100; background-color: #ddf;">
-      <h3>クリックした地点</h3>
-      <ul id="clicked-points-list"></ul>
-    </div>
-
     <div id="style-selector-control" class="map-control" style="position:absolute; top: 93px; left: 10px; z-index: 100; background-color: #ddf;">
       <div id="content" style="width:250px; padding:5px; display:none">
         <form method="post" action="https://nsk.org/maps/MapPost.php">

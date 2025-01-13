@@ -34,15 +34,16 @@ try {
         $oldUrl = $area['OldUrl'];
         $articleId = $area['ArticleId'];
         $userId = $area['UserId'];
+        $mapdata = $area['MapData'];
 
         if ($mapType == 1) {
-            header("Location: noteMapType1.html?"."lat=".$lat."&lng=".$lng."&".$param);
+            header("Location: noteMapNew.html?"."lat=".$lat."&lng=".$lng."&".$param);
             exit();
         } elseif ($mapType == 2) {
             header("Location: noteMapType2.html?".$param);
             exit();
         } elseif ($mapType == 3) {
-            header("Location: noteMapType3.html?"."lat=".$lat."&lng=".$lng."&".$param);
+            header("Location: noteMapNew.html?"."lat=".$lat."&lng=".$lng."&mapData=".$mapdata."&".$param);
             exit();
         } elseif ($mapType == 9) {
             header("Location: $newUrl");

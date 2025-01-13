@@ -1,97 +1,185 @@
-<!DOCTYPE html>
 <html lang="ja">
   <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Event Click LatLng</title>
     <link href="./notemap.css" rel="stylesheet">
     <script>
+      let map;
+      let counter = 0;
+      let clickedPoints = [];
       document.addEventListener('DOMContentLoaded', function() {
-        const params = new URLSearchParams(window.location.search);
-        const link = document.getElementById('KijiLink');
-        link.href = params.get('url');
-        link.textContent = "題名：" + params.get('title');
+        const urlParams = new URLSearchParams(window.location.search);
+        const title = urlParams.get('title');
+        const url = urlParams.get('url');
+        var link = document.getElementById('KijiLink');
+        link.href = url;
+        link.textContent = "題名：" + title;
       });
-
-      let map, counter = 0, clickedPoints = [], directionsService, directionsRenderer;
-
+      function splitAddress(address) {
+        // 郵便番号と住所部分を切り分ける正規表現
+        const regex = /^〒?(\d{3}-\d{4})\s*(.*)$/;
+        const match = address.match(regex);
+        if (match) {
+            return {
+                postalCode: match[1], address: match[2]
+            };
+        } else {
+            return null;
+        }
+      }
+      let directionsService;
+      let directionsRenderer;
       function initMap() {
         const urlParams = new URLSearchParams(window.location.search);
-        const lat = parseFloat(urlParams.get('lat'));
-        const lng = parseFloat(urlParams.get('lng'));
-          // 初期画面
-          const map = new google.maps.Map(document.getElementById('map'), {
+        let lat = parseFloat(urlParams.get('lat'));
+        let lng = parseFloat(urlParams.get('lng'));
+        if (isNaN(lat)) {
+          lat = 35.46612645;
+          lng = 139.6187562;
+        }
+        // 初期画面
+        //const myLatlng = { lat: 35.46612645, lng: 139.6187562 };
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 14,
           center: { lat: lat, lng: lng },
-          zoom: 15,
+          scaleControl: true,
         });
-
-       // map = new google.maps.Map(document.getElementById("map"), {
-       //   zoom: 14, center: { lat: 35.466126, lng: 139.618756 }, scaleControl: true,
-       // });
         directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({ map });
-
+        directionsRenderer = new google.maps.DirectionsRenderer();
+        directionsRenderer.setMap(map);
+        // 検索ボックスの設定
+        // https://qiita.com/tkhshiq/items/723d2a993feb712f021e
         const input = document.getElementById("pac-input");
         const searchBox = new google.maps.places.SearchBox(input);
-        map.addListener("bounds_changed", () => searchBox.setBounds(map.getBounds()));
+        map.addListener("bounds_changed", () => { searchBox.setBounds(map.getBounds()); });
 
+        let markers = [];
         searchBox.addListener("places_changed", () => {
-          const places = searchBox.getPlaces();
-          if (places.length === 0) return;
-          const bounds = new google.maps.LatLngBounds();
-          places.forEach(place => {
-            if (!place.geometry) return;
-            new google.maps.Marker({
-              map, icon: { url: place.icon, scaledSize: new google.maps.Size(25, 25) },
-              title: place.name, position: place.geometry.location
-            });
-            bounds.extend(place.geometry.viewport || place.geometry.location);
-          });
-          map.fitBounds(bounds);
-        });
+            const places = searchBox.getPlaces();
+            if (places.length == 0) { return; }
+            markers.forEach((marker) => { marker.setMap(null); });
+            markers = [];
+            const bounds = new google.maps.LatLngBounds();
+            places.forEach((place) => {
+              if (!place.geometry) {
+                console.log("Returned place contains no geometry");
+                return;
+              }
+              const icon = {
+                url: place.icon,
+                size: new google.maps.Size(71, 71),
+                origin: new google.maps.Point(0, 0),
+                anchor: new google.maps.Point(17, 34),
+                scaledSize: new google.maps.Size(25, 25),
+              };
+              // Create a marker for each place.
+              markers.push(new google.maps.Marker({
+                  map,
+                  icon,
+                  title: place.name,
+                  position: place.geometry.location,
+                })
+              );
 
-        map.addListener("click", (e) => {
-          if (counter === 0) fillInitialFormFields();
+              if (place.geometry.viewport) {
+                bounds.union(place.geometry.viewport);
+              } else {
+                bounds.extend(place.geometry.location);
+              }
+            });
+            map.fitBounds(bounds);
+          });
+        //}
+        // クリックした場所の情報を取得して保存する
+        map.addListener("click", function(e) {
+          if (counter == 0) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const aId = urlParams.get('aId');
+            var val = document.getElementById('aId');
+            val.value = aId;
+            const uId = urlParams.get('uId');
+            val = document.getElementById('uId');
+            val.value = uId;
+            const title = urlParams.get('title');
+            val = document.getElementById('title');
+            val.value = title;
+            const orgUrl = urlParams.get('url');
+            val = document.getElementById('orgUrl');
+            val.value = orgUrl;
+          }
           addInputBlock(e.latLng);
           clickedPoints.push({ lat: e.latLng.lat(), lng: e.latLng.lng() });
-          if (clickedPoints.length > 1) drawRoute();
-        });
-      }
-
-      function fillInitialFormFields() {
-        const params = new URLSearchParams(window.location.search);
-        ['aId', 'uId', 'title', 'orgUrl'].forEach(id => {
-          const element = document.getElementById(id);
-          if (element) {
-            element.value = params.get(id);
+          updateClickedPointsList();
+          if (clickedPoints.length > 1) {
+            drawRoute();
           }
         });
-      }
 
+      }
       function addInputBlock(latLng) {
+        //var latLng = e.latLng;
+        var latitude = latLng.lat().toFixed(6);
+        var longitude = latLng.lng().toFixed(6);
+
+
         counter++;
+        if (counter > 1) document.getElementById("mapType").value = "3";
+        document.getElementById("content").style.display = "block";
         const container = document.getElementById('input-container');
         const inputBlock = document.createElement('div');
         inputBlock.className = 'input-block';
-        inputBlock.innerHTML = `
-          <label>L${counter}</label><input type="text" name="lat_${counter}" value="${latLng.lat()}">
-          <input type="text" name="lng_${counter}" value="${latLng.lng()}">
-          <input type="text" name="comment_${counter}" placeholder="当地点のコメント">`;
+
+        const label = document.createElement('label');
+        label.textContent = 'L' + counter;
+        label.style.width = '20px';
+
+        const latInput = document.createElement('input');
+        latInput.type = 'text';
+        latInput.name = 'lat_' + counter;
+        latInput.style.width = '105px';
+        latInput.value = latLng.lat();
+
+        const lngInput = document.createElement('input');
+        lngInput.type = 'text';
+        lngInput.name = 'lng_' + counter;
+        lngInput.style.width = '105px';
+        lngInput.value = latLng.lng();
+
+        const commentInput = document.createElement('input');
+        commentInput.type = 'text';
+        commentInput.name = 'comment_' + counter;
+        commentInput.style.width = '240px';
+        commentInput.placeholder = '当地点のコメント';
+
+        inputBlock.appendChild(label);
+        //inputBlock.appendChild(document.createElement('br'));
+        inputBlock.appendChild(latInput);
+        inputBlock.appendChild(lngInput);
+        inputBlock.appendChild(document.createElement('br'));
+        inputBlock.appendChild(commentInput);
         container.appendChild(inputBlock);
+
         map.panTo(latLng);
-        getGeocodedAddress(latLng);
-      }
-
-      function getGeocodedAddress(latLng) {
-        new google.maps.Geocoder().geocode({ location: latLng }, (results, status) => {
-          if (status === 'OK' && results[0]) {
-            const addressParts = results[0].formatted_address.replace('日本、', '').split(' ');
-            document.getElementById('postcode').value = addressParts[0];
-            document.getElementById('address').value = addressParts.slice(1).join(' ');
-          }
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode( {'location': latLng}, function(results, status){
+            if (status === 'OK' && results[0]){
+                var address = results[0].formatted_address.replace('日本、','');
+                const result = splitAddress(address);
+                if (result) {
+                    var postcode = result.postalCode;
+                    val = document.getElementById('postcode');
+                    val.value = postcode;
+                    address = result.address;
+                    val = document.getElementById('address');
+                    val.value = address;
+                }
+            } else {
+                alert("住所から位置の取得ができませんでした。: " + status);
+                return;
+            }
         });
-      }
-
+        };
+      // ルートを描く処理
       function drawRoute() {
         const waypoints = clickedPoints.slice(1, -1).map(point => ({ location: point, stopover: true }));
         const origin = clickedPoints[0];
@@ -113,32 +201,55 @@
         });
       }
 
+      function updateClickedPointsList() {
+        const pointsList = document.getElementById('clicked-points-list');
+        pointsList.innerHTML = ''; // リストをクリア
+
+        clickedPoints.forEach((point, index) => {
+          const listItem = document.createElement('li');
+          listItem.textContent = `Point ${index + 1}: (${point.lat}, ${point.lng})`;
+          pointsList.appendChild(listItem);
+        });
+      }
+
+        // マーカーを配置する処理
+      function placeMarker()
+      {
+          console.log('マーカーを配置する処理を実行します');
+      // ここにマーカー配置のロジックを追加します
+      }
+      // 初期化
       window.initMap = initMap;
     </script>
   </head>
   <body>
+    <!-- <a onclick="setTitle()">タイトル取得</a> -->
     <input type="text" id="pac-input" class="controls" style="width:240px;" placeholder="Search Box"/>
-    <a id="KijiLink" class="btn" href="#">タイトル</a>
-    <div id="clicked-points" style="background-color: #ddf; position: absolute; top: 93px; left: 270px; z-index: 100;">
+    <a id="KijiLink" class="btn" href="note.com">タイトル</a>
+    <div id="clicked-points" style="position:absolute; top: 93px; left: 270px; z-index: 100; background-color: #ddf;">
       <h3>クリックした地点</h3>
       <ul id="clicked-points-list"></ul>
     </div>
-    <div id="content" style="display: none;">
-      <form method="post" action="https://nsk.org/maps/MapPost.php">
-        <input type="hidden" id="mapType" name="mapType" value="1">
-        <input type="hidden" id="orgUrl" name="orgUrl">
-        <input type="hidden" id="uId" name="uId">
-        <input type="hidden" id="aId" name="aId">
-        <input type="text" id="postcode" name="postcode" readonly>
-        <input type="text" id="address" name="address" readonly>
-        <textarea id="title" name="title" style="display:none;" readonly></textarea>
-        <textarea id="newUrl" name="mapdata" style="display:none;"></textarea>
-        <textarea id="pname" name="pname" style="display:none;"></textarea>
-        <div id="input-container"></div>
-        <input type="submit" class="btn btn-primary btn-sm" value="保存して終了">
-      </form>
+
+    <div id="style-selector-control" class="map-control" style="position:absolute; top: 93px; left: 10px; z-index: 100; background-color: #ddf;">
+      <div id="content" style="width:250px; padding:5px; display:none">
+        <form method="post" action="https://nsk.org/maps/MapPost.php">
+          <input type="hidden" id="mapType"  name="mapType"  style="width:118px; text-align:right" value="1">
+          <input type="hidden" id="orgUrl"   name="orgUrl"   style="width:240px;" readonly>
+          <input type="hidden" id="uId"      name="uId"      style="width:118px;" readonly>
+          <input type="hidden" id="aId"      name="aId"      style="width:118px;" readonly>
+          <input type="text" id="postcode" name="postcode" style="width:105px;" readonly>
+          <input type="text" id="address"  name="address"  style="width:240px;" readonly>
+          <input type="hidden" id="building" name="building" style="width:120px;" readonly>
+          <textarea id="title"  name="title"   style="width:240px;display:none;" readonly></textarea>
+          <textarea id="newUrl" name="mapdata" style="width:240px; display:none" placeholder="既に作成したurlがあれば入力する"></textarea><br>
+          <textarea id="pname"  name="pname"   style="width:240px; display:none" placeholder="この場所についてのコメント"></textarea><br>
+          <div id="input-container"></div>
+          <input type="submit" class="btn btn-primary btn-sm" style="text-align: center;" value="保存して終了">
+        </form>
+      </div>
     </div>
     <div id="map" class="map" style="height: 96%; width: 100%;"></div>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_vrI96hCDkV19Auv15RKJL_MX0BXIlcQ&callback=initMap&libraries=places" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_vrI96hCDkV19Auv15RKJL_MX0BXIlcQ&callback=initMap&libraries=places"></script>
   </body>
 </html>
