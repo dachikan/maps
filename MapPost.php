@@ -48,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $sql = "INSERT INTO areas (MapType, OrgUrl, UserId, ArticleId, Title, PostCode, Addr, Building, Lat, Lng, Pname, MapData )
             VALUES ('$mapType','$orgUrl','$uId', '$aId', '$title', '$postcode', '$address', '$building', '$lat0', '$lng0', '$pname', '$mapdata')";
     }
-    echo $sql;
+    //echo $sql;
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
     error_reporting(E_ALL);

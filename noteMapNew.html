@@ -1,8 +1,10 @@
-﻿<html lang="ja">
+﻿<!DOCTYPE html>
+<html lang="ja">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Event Click LatLng</title>
 <link href="./notemap.css" rel="stylesheet">
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_vrI96hCDkV19Auv15RKJL_MX0BXIlcQ&libraries=places&callback=initMap"></script>
 <script>
   let map;
   let directionsService;
@@ -107,20 +109,27 @@
   }
   // ルートを描く処理
   function drawRoute() {
-    const waypoints = clickedPoints.slice(1, -1).map(point => ({ location: point, stopover: true }));
+    const selectedMode = document.getElementById("mode").value; // 選択されたモードを取得
     const origin = clickedPoints[0];
     const destination = clickedPoints[clickedPoints.length - 1];
 
-    const request = {
+    let request = {
       origin: origin,
       destination: destination,
-      waypoints: waypoints,
-      travelMode: google.maps.TravelMode.DRIVING
+      travelMode: google.maps.TravelMode[selectedMode]  // 選択されたモードを使用
     };
+
+    // 電車モード以外の場合にウェイポイントを追加
+    if (selectedMode !== "TRANSIT" && clickedPoints.length > 2) {
+      const waypoints = clickedPoints.slice(1, -1).map(point => ({ location: point, stopover: true }));
+      request.waypoints = waypoints;
+    }
 
     directionsService.route(request, (result, status) => {
       if (status === google.maps.DirectionsStatus.OK) {
         directionsRenderer.setDirections(result);
+      } else if (status === google.maps.DirectionsStatus.ZERO_RESULTS) {
+        alert('ルートが見つかりませんでした。異なるモードを試してください。');
       } else {
         console.log('ルート描画に失敗しました: ' + status);
       }
@@ -137,8 +146,8 @@
       try {
         mapData = JSON.parse(mapDataParam);
         document.getElementById("new").value = "0";
-      }
-      catch (e)
+        clickedPoints = [];
+      } catch (e)
         { console.error('Failed to parse mapData:', e); }
     }
     if (isNaN(lat)) {
@@ -195,28 +204,20 @@
         map.fitBounds(bounds);
       });
     // MapDataの値がある場合のルート表示
-    if (mapData && mapData.length > 0) {
+    if (mapData.length > 0) {
       mapData.forEach(point => {
         clickedPoints.push({ lat: parseFloat(point.lat), lng: parseFloat(point.lng) }); // 入力フォームの追加
-      addInputBlock(new google.maps.LatLng(point.lat, point.lng), point.comment); });
+        addInputBlock(new google.maps.LatLng(point.lat, point.lng), point.comment);
+      });
       drawRoute();
     }
     // クリックした場所の情報を取得して保存する
     map.addListener("click", function(e) {
       if (counter == 0) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const aId = urlParams.get('aId');
-        var val = document.getElementById('aId');
-        val.value = aId;
-        const uId = urlParams.get('uId');
-        val = document.getElementById('uId');
-        val.value = uId;
-        const title = urlParams.get('title');
-        val = document.getElementById('title');
-        val.value = title;
-        const orgUrl = urlParams.get('url');
-        val = document.getElementById('orgUrl');
-        val.value = orgUrl;
+        document.getElementById('aId').value = urlParams.get('aId');
+        document.getElementById('uId').value = urlParams.get('uId');
+        document.getElementById('title').value = urlParams.get('title');
+        document.getElementById('orgUrl').value = urlParams.get('url');
       }
       addInputBlock(e.latLng);
       clickedPoints.push({ lat: e.latLng.lat(), lng: e.latLng.lng() });
@@ -241,6 +242,12 @@
       <input type="hidden" id="orgUrl"   name="orgUrl"   style="width:240px;" readonly>
       <input type="hidden" id="uId"      name="uId"      style="width:118px;" readonly>
       <input type="hidden" id="aId"      name="aId"      style="width:118px;" readonly>
+      <select id="mode" onchange="drawRoute()">
+        <option value="WALKING">歩行</option>
+        <option value="TRANSIT">電車</option>
+        <option value="BICYCLING">自転車</option>
+        <option value="DRIVING">車</option>
+      </select>
       <input type="text" id="postcode" name="postcode" style="width:105px;" readonly>
       <input type="text" id="address"  name="address"  style="width:240px;" readonly>
       <input type="hidden" id="building" name="building" style="width:120px;" readonly>
@@ -254,6 +261,5 @@
   </div>
 </div>
 <div id="map" class="map" style="height: 96%; width: 100%;"></div>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA_vrI96hCDkV19Auv15RKJL_MX0BXIlcQ&callback=initMap&libraries=places"></script>
 </body>
 </html>
