@@ -40,10 +40,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         $mapdata = $_POST['mapdata'];
     }
-    $sql = "INSERT INTO areas (MapType, OrgUrl, UserId, ArticleId, Title, PostCode, Addr, Building, Lat, Lng, Pname, MapData )
+    if ($_POST['new'] == 0)
+    { // 更新のSQL文
+        $sql = "UPDATE areas
+            SET MapData='$mapdata' WHERE ArticleId='$aId'";
+    } else {
+        $sql = "INSERT INTO areas (MapType, OrgUrl, UserId, ArticleId, Title, PostCode, Addr, Building, Lat, Lng, Pname, MapData )
             VALUES ('$mapType','$orgUrl','$uId', '$aId', '$title', '$postcode', '$address', '$building', '$lat0', '$lng0', '$pname', '$mapdata')";
-    //echo $sql;
-    //error_reporting(E_ALL);
+    }
+    echo $sql;
+    error_reporting(E_ALL);
     ini_set('display_errors', 1);
     error_reporting(E_ALL);
     if ($conn->query($sql) === TRUE) {
