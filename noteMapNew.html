@@ -44,10 +44,21 @@
     const inputBlock = document.createElement('div');
     inputBlock.className = 'input-block';
 
-    const label = document.createElement('label');
-    label.textContent = String.fromCharCode(65 + (counter - 1));
-    label.style.width = '20px';
-    inputBlock.appendChild(label);
+    const button = document.createElement('button');
+    button.textContent = String.fromCharCode(65 + (counter - 1)); // ラベルのテキストをボタンのテキストに設定
+    button.style.width = '20px';  // ボタンの幅を20pxに設定
+    button.style.height = '20px'; // ボタンの高さを20pxに設定
+    button.style.backgroundColor = 'red';  // 初期色を設定
+    button.type = 'button';  // ボタンのタイプをボタンに設定
+    button.addEventListener('click', function(event) {
+      event.preventDefault();  // デフォルトのフォーム送信動作を防ぐ
+      if (button.style.backgroundColor === 'red') {
+        button.style.backgroundColor = 'green';  // 緑色に変更
+      } else {
+        button.style.backgroundColor = 'red';  // 元の色に戻す
+      }
+    });
+    inputBlock.appendChild(button);
 
     const latInput = document.createElement('input');
     latInput.type = 'text';
@@ -104,8 +115,13 @@
         drawRoute();
       } else {
         directionsRenderer.setDirections({routes: []});
+        document.getElementById("mapType").value = "1";
       }
     }
+  }
+
+  function enterUrl() {
+    document.getElementById("newUrl").style.display = "block";
   }
   // ルートを描く処理
   function drawRoute() {
@@ -248,11 +264,13 @@
         <option value="BICYCLING">自転車</option>
         <option value="DRIVING">車</option>
       </select>
-      <input type="text" id="postcode" name="postcode" style="width:105px;" readonly>
+      <input type="text" id="postcode" name="postcode" style="width:75px;" readonly>
+      <button type="button" onclick="enterUrl()">URL入力</button>
       <input type="text" id="address"  name="address"  style="width:240px;" readonly>
       <input type="hidden" id="building" name="building" style="width:120px;" readonly>
       <textarea id="title"  name="title"   style="width:240px;display:none;" readonly></textarea>
-      <textarea id="newUrl" name="mapdata" style="width:240px; display:none" placeholder="既に作成したurlがあれば入力する"></textarea><br>
+      <textarea id="newUrl" name="newUrl" style="width:240px; display:none" placeholder="既に作成したurlがあれば入力する"></textarea>
+      <textarea id="nmapdata" name="mapdata" style="width:240px; display:none"></textarea>
       <textarea id="pname"  name="pname"   style="width:240px; display:none" placeholder="この場所についてのコメント"></textarea><br>
       <div id="input-container"></div>
       <button type="button" onclick="removeLastPoint()">最後の地点削除</button>
