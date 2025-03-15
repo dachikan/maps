@@ -1,0 +1,70 @@
+﻿* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    width: 150px;
+    text-align: center;
+    color: #565656;
+    margin: 20px 40px;
+    background-image: url('../icons/mapillust.png');
+    background-size: cover;
+}
+
+h1 {
+    margin: 10px 0;
+    font-size: 30px;
+}
+
+#arrowBack {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border: 2px solid;
+    border-color: transparent transparent #565656 #565656;
+    transform: rotate(45deg);
+    margin-right: 12px;
+}
+
+#arrowNext {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border: 2px solid;
+    border-color: #565656 #565656 transparent transparent;
+    transform: rotate(45deg);
+    margin-left: 12px;
+}
+
+#dateLabel {
+    display: inline-block;
+    /* font-size: large; */
+    margin-bottom: 10px;
+    /* background-color:blue; */
+}
+
+#numOfGoogled{
+    position: absolute;
+    left: 20px;
+    bottom: 0;
+    width: 55px;
+    text-align: right;
+}
+
+.times{
+    position: absolute;
+    bottom: 17px;
+    right: 25px;
+    /* margin-left: 10px; */
+}
+
+
+
+.numDisplay{
+    margin-top: 8px;
+    width: 100%;
+    height: 50px;
+    position: relative;
+}
+

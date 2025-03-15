@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="css/kickstart.css" rel="stylesheet" type="text/css" media="all">
+  <link href="css/notePopup.css" rel="stylesheet" type="text/css" />
+  <script src="js/popup.js"></script>
+  <!-- <style>
+    .bg_illust {
+      background-image: url('images/mapIllust.png');
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center;
+    }
+  </style> -->
+</head>
+
+<body style="background:lightskyblue;">
+  <form class="inputForm">
+    <div class="tabPanel tabSearch bg_illust" id="tab2">
+      <fieldset class="findwhere bg_illust">
+        <legend id="legendText">このnote記事と地図を連携します</legend>
+          <p id="pageTitle"></p>
+          <p id="sns">SNS: </p>
+          <p id="articleId">記事ID: </p>
+          <a id="MapLink" target="_blank" class="button" style="background:lightskyblue;"
+            href="https://nsk.org/maps/noteMap.php"><b>note連携地図</b></a>
+          <a id="ArticleListLink" target="_blank" class="button" style="background:lightgreen; display:none;"
+            href="https://nsk.org/maps/noteArticleList.php"><b>記事一覧表示</b></a>
+      </fieldset>
+    </div>
+  </form>
+</body>
+
+</html>

@@ -1,0 +1,21 @@
+﻿{
+  "manifest_version": 3,
+  "name": "Connect note & Map",
+  "version": "0.41",
+  "description": "Display maps and article lists in Note articles.",
+  "permissions": [ "tabs" ],
+  "host_permissions": [
+    "https://*.note.com/*",
+    "https://editor.note.com/*"
+  ],
+  "background": { "service_worker": "js/background.js" },
+  "action": {
+    "default_popup": "noteConnect.html",
+    "default_icon": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+  },
+  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval' http://localhost:* http://127.0.0.1:*"
+  }
+}

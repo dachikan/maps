@@ -1,6 +1,6 @@
 <?php
 header("Content-Type: text/html; charset=utf-8");
-header("Content-Security-Policy: script-src 'self' 'unsafe-eval'; frame-ancestors 'self';");
+header("Content-Security-Policy: script-src 'self'; frame-ancestors 'self';"); // 修正: 'unsafe-eval' 削除
 header("X-Content-Type-Options: nosniff");
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
@@ -15,6 +15,15 @@ $pass = "kami2004";
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // レコード削除処理
+    if (isset($_POST['delete_id'])) {
+        $delete_id = $_POST['delete_id'];
+        $deleteSQL = "DELETE FROM areas WHERE id = :id";
+        $stmt = $pdo->prepare($deleteSQL);
+        $stmt->execute(['id' => $delete_id]);
+    }
+
     $SQL = "SELECT * FROM areas";
     $stmt = $pdo->prepare($SQL);
     $stmt->execute();
@@ -46,22 +55,24 @@ try {
             color: blue;
         }
     </style>
+    <script src="script.js"></script> <!-- 修正: 外部JavaScriptファイルを読み込む -->
 </head>
 <body>
     <h1>地図一覧</h1>
+    <form id="delete_form" method="post">
+        <input type="hidden" name="delete_id" id="delete_id">
+    </form>
     <table>
         <tr>
+            <th>id</th>
             <th>Title</th>
             <th>ユーザId</th>
+            <th>ユーザ名</th>
+            <th>メール</th>
             <th>記事Id</th>
-            <th>郵便番号</th>
+            <th>〒</th>
             <th>住所</th>
-            <th>MapType</th>
-            <th>Lat</th>
-            <th>Lng</th>
-            <th>NewUrl</th>
-            <th>OldUrl</th>
-            <th>UserId</th>
+            <th>Type</th>
             <th>MapData</th>
         </tr>
         <?php foreach ($areas as $area): 
@@ -79,18 +90,16 @@ try {
             }
         ?>
             <tr>
+                <td><?php echo htmlspecialchars($area['id']); ?> <button type="button" onclick="deleteRecord(<?php echo $area['id']; ?>)">🗑</button></td>
                 <td><?php echo $titleLink; ?></td>
                 <td><?php echo htmlspecialchars($area['UserId']); ?></td>
+                <td><?php echo htmlspecialchars($area['UserName']); ?></td>
+                <td><?php echo htmlspecialchars($area['Mail']); ?></td>
                 <td><?php echo htmlspecialchars($area['ArticleId']); ?></td>
                 <td><?php echo htmlspecialchars($area['Postcode']); ?></td>
                 <td><?php echo htmlspecialchars($area['Address']); ?></td>
                 <td><?php echo htmlspecialchars($area['MapType']); ?></td>
-                <td><?php echo htmlspecialchars($area['Lat']); ?></td>
-                <td><?php echo htmlspecialchars($area['Lng']); ?></td>
-                <td><?php echo htmlspecialchars($area['NewUrl']); ?></td>
-                <td><?php echo htmlspecialchars($area['OldUrl']); ?></td>
-                <td><?php echo htmlspecialchars($area['UserId']); ?></td>
-                <td><?php echo htmlspecialchars($area['MapData']); ?></td>
+                <td><?php echo htmlspecialchars(mb_substr($area['MapData'], 0, 20)); ?></td>
             </tr>
         <?php endforeach; ?>
     </table>
