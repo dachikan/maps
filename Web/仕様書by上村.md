@@ -59,7 +59,7 @@ CREATE TABLE `noteMapData` (
 
 ### Titleリンク先詳細
 * 地図表示ページはhttps://nsk.org/maps/noteMapNew.html とする
-* 標準パラメタは?lat={lat}&lng={lng}&title={title}とする
+* 標準パラメタは?lat={lat}&lng={lng}&title={title}&url={OrgUrl}とする
 * Typeによって地図の意味や表示方法は以下のように異なる
 * Type=1：地点を表示する
 *  ```<a href="地図表示ページ?標準パラメタ">{Title}</a> ```
