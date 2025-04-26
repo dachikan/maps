@@ -42,10 +42,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     if ($_POST['new'] == 0)
     { // 更新のSQL文
-        $sql = "UPDATE areas
+        $sql = "UPDATE noteMapData
             SET MapData='$mapdata' WHERE ArticleId='$aId'";
     } else {
-        $sql = "INSERT INTO areas (MapType, OrgUrl, UserId, ArticleId, Title, PostCode, Addr, Building, Lat, Lng, Pname, MapData )
+        $sql = "INSERT INTO noteMapData (MapType, OrgUrl, UserId, ArticleId, Title, PostCode, Addr, Building, Lat, Lng, Pname, MapData )
             VALUES ('$mapType','$orgUrl','$uId', '$aId', '$title', '$postcode', '$address', '$building', '$lat0', '$lng0', '$pname', '$mapdata')";
     }
     echo $sql;

@@ -21,7 +21,7 @@ $pass = "kami2004";
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $SQL = "SELECT * FROM areas WHERE ArticleId = :articleId";
+    $SQL = "SELECT * FROM noteMapData WHERE ArticleId = :articleId";
     $stmt = $pdo->prepare($SQL);
     $stmt->execute(['articleId' => $aId]);
     $area = $stmt->fetch(PDO::FETCH_ASSOC);
